@@ -15,19 +15,22 @@ import eablob = require("express-azure-blob");
 
 const app = express();
 app.use(eablob({
-    connectionString: "DefaultEndpointsProtocol=http;AccountName=XXXX;AccountKey=XXXX;",
-    container: {
-        name: "web",
-        path: "test"
-    },
-    basePath: "/abc"
+    blob: {
+        connectionString: "DefaultEndpointsProtocol=http;AccountName=XXXX;AccountKey=XXXX;",
+        container: {
+            name: "web",
+            path: "test"
+        },
+    }
+    basePath: "/abc",
+    indexes: ["index.html", "index.htm"]
 }));
 ```
 
 上記設定で下記のような動作をします。
 
-http://XXXX/abc/foo.jpg ->  container: web test/foo.jpg
-http://XXXX/abc/def/foo.jpg ->  container: web test/def/foo.jpg
+* http://XXXX/abc/foo.jpg ->  container: web test/foo.jpg
+* http://XXXX/abc/def/foo.jpg ->  container: web test/def/foo.jpg
 
 ## 依存するライブラリ
 
