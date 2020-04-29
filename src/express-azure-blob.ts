@@ -45,6 +45,11 @@ function execute(res: express.Response<any>, blob: azure.BlobService, c: string,
   });
 }
 
+function normalize(s: string){
+  const ss = s.replace(/\/+/g, "/");
+  return ss.startsWith("/") ? ss.substr(1) : ss;
+}
+
 function e(o: e.Options) : express.RequestHandler {
   const blob = azure.createBlobService(o.blob.connectionString);
   return (req, res, next) => {
@@ -58,8 +63,9 @@ function e(o: e.Options) : express.RequestHandler {
     const executor = new Promise<number>((resolve, reject) => {
       if(rpath.endsWith("/")){
         const findfile = o.indexes?.map((x) => {
-          return isExist(blob, o.blob.container.name, `${cpath}${x}`)
-            .then(exists => exists ? `${cpath}${x}` : undefined);
+          const fpath = normalize(`${cpath}${x}`);
+          return isExist(blob, o.blob.container.name, fpath)
+            .then(exists => exists ? fpath : undefined);
         });
         if(findfile){
           Promise.all(findfile)
@@ -81,7 +87,8 @@ function e(o: e.Options) : express.RequestHandler {
         }
       }
       else{
-        resolve(execute(res, blob, o.blob.container.name, cpath));
+        const fpath = normalize(cpath);
+        resolve(execute(res, blob, o.blob.container.name, fpath));
       }
     });
 
