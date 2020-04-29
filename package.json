@@ -1,0 +1,31 @@
+{
+  "name": "express-azure-blob",
+  "version": "0.0.1",
+  "description": "azure blob storage via express.",
+  "main": "./dist/express-azure-blob.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/codianz/express-azure-blob",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/codianz/express-azure-blob.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codianz/express-azure-blob/issues"
+  },
+  "keywords": [
+    "express",
+    "azure",
+    "blob",
+    "storage"
+  ],
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "azure-storage": "^2.10.3",
+    "express": "^4.17.1",
+    "typescript": "^3.8.3"
+  }
+}
