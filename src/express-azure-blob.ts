@@ -12,7 +12,12 @@ declare namespace e {
       }
     };
     basePath: string;
-    indexes?: string[]
+    indexes?: string[];
+    useRedirect?: {
+      exceptMimeType?: string[];
+      statusCode?: number;            /* default 302 */
+      readableMarginSeconds?: number; /* default 60 */
+    }
   }
 }
 
@@ -51,6 +56,26 @@ function normalize(s: string){
   return ss.startsWith("/") ? ss.substr(1) : ss;
 }
 
+
+function createRedirectUrl(blob: azure.BlobService, container: string, path: string, margin: number) {
+  const startDate = new Date();
+  const expiryDate = new Date();
+  startDate.setSeconds(startDate.getSeconds() - margin);
+  expiryDate.setSeconds(expiryDate.getSeconds() + margin);
+
+  const sharedAccessPolicy = {
+      AccessPolicy: {
+          Permissions: azure.BlobUtilities.SharedAccessPermissions.READ,
+          Start: startDate.toISOString(),
+          Expiry: expiryDate.toISOString()
+      }
+  };
+
+  const sas = blob.generateSharedAccessSignature(container, path, sharedAccessPolicy);
+  return blob.getUrl(container, path, sas);
+}
+
+
 function e(o: e.Options) : express.RequestHandler {
   const blob = azure.createBlobService(o.blob.connectionString);
   return (req, res, next) => {
@@ -61,7 +86,7 @@ function e(o: e.Options) : express.RequestHandler {
     const rpath = req.path.substr(o.basePath.length);
     const cpath = `${o.blob.container.path}${rpath}`;
 
-    const executor = new Promise<number>((resolve, reject) => {
+    const executor = new Promise<number | undefined>((resolve, reject) => {
       if(rpath.endsWith("/")){
         const findfile = o.indexes?.map((x) => {
           const fpath = normalize(`${cpath}${x}`);
@@ -90,19 +115,39 @@ function e(o: e.Options) : express.RequestHandler {
       }
       else{
         const fpath = normalize(cpath);
-        res.contentType(mime.getType(fpath) ?? "application/octet-stream");
-        resolve(execute(res, blob, o.blob.container.name, fpath));
+        const mtype = mime.getType(fpath) ?? "application/octet-stream";
+        let bRedirect = false;
+        if(o.useRedirect){
+          if(o.useRedirect.exceptMimeType){
+            bRedirect = o.useRedirect.exceptMimeType.find(x => x == mtype) === undefined;
+          }
+          else{
+            bRedirect = true;
+          }
+        }
+        if(bRedirect){
+          const margin = o.useRedirect?.readableMarginSeconds ?? 60;
+          const statusCode = o.useRedirect?.statusCode ?? 302;
+          const redirectUrl = createRedirectUrl(blob, o.blob.container.name, fpath, margin);
+          res.redirect(statusCode, redirectUrl);
+          resolve(undefined);
+        }
+        else{
+          res.contentType(mtype);
+          resolve(execute(res, blob, o.blob.container.name, fpath));
+        }
       }
     });
 
     executor
     .then((status) => {
-      res.status(status).end();
+      if(status) res.status(status);
     })
     .catch((status) => {
-      res.status(status).end();
+      res.status(status);
     })
     .finally(() => {
+      res.end();
       next();
     })
   };
