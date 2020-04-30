@@ -1,5 +1,6 @@
 import express = require("express");
 import azure from "azure-storage";
+import mime from "mime";
 
 declare namespace e {
   interface Options {
@@ -74,6 +75,7 @@ function e(o: e.Options) : express.RequestHandler {
           })
           .then((f) => {
             if(f.length > 0){
+              res.contentType("text/html");
               resolve(execute(res, blob, o.blob.container.name, f[0]));
             }
             reject(404);
@@ -88,6 +90,7 @@ function e(o: e.Options) : express.RequestHandler {
       }
       else{
         const fpath = normalize(cpath);
+        res.contentType(mime.getType(fpath) ?? "application/octet-stream");
         resolve(execute(res, blob, o.blob.container.name, fpath));
       }
     });

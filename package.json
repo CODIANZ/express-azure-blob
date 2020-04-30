@@ -1,6 +1,6 @@
 {
   "name": "express-azure-blob",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "azure blob storage via express.",
   "main": "./dist/express-azure-blob.js",
   "scripts": {
@@ -27,5 +27,8 @@
     "azure-storage": "^2.10.3",
     "express": "^4.17.1",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "mime": "^2.4.4"
   }
 }
